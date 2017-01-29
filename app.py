@@ -10,7 +10,8 @@ this license in a file with the distribution.
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 import os
-from models import db, User
+from models import db, User, Transaction
+from utils import send_error, send_success
 from settings import MYSQL, GROOT_ACCESS_TOKEN
 
 import logging
@@ -32,17 +33,66 @@ DEBUG = os.environ.get('CREDITS_DEBUG', False)
 api = Api(app)
 
 
+def validate_netid(netid):
+    # TODO: Ask user service to validate netid
+    return netid
+
+
 class UserCreditsResource(Resource):
-    def get(self):
+    def get(self, netid):
         ''' Endpoint for checking a user's balance '''
-        pass
+        user = User.query.filter_by(netid=netid).first()
+        if not user:
+            return send_error('Unrecognized user', 404)
+        return jsonify(user.serialize())
 
-    def put(self):
-        ''' Endpoint for setting a user's balance '''
-        pass
+    def post(self, netid):
+        ''' Endpoint for creating a user account '''
+        if User.query.filter_by(netid=netid).first():
+            return send_error('User already exists')
+        user = User(netid=netid)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify(user.serialize())
 
 
-api.add_resource(UserCreditsResource, '/credits')
+class TransactionResource(Resource):
+    def post(self, id=None):
+        ''' Endpoint for creating a new transaction '''
+        parser = reqparse.RequestParser()
+        parser.add_argument('netid', location='json',
+                            required=True, type=validate_netid)
+        parser.add_argument('amount', location='json',
+                            required=True, type=float)
+        parser.add_argument('description', location='json', default='')
+        args = parser.parse_args()
+
+        if not User.query.filter_by(netid=args.netid).first():
+            return send_error('Unrecognized user')
+
+        transaction = Transaction(
+            netid=args.netid,
+            amount=args.amount,
+            description=args.description
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        return jsonify(transaction.serialize())
+
+    def delete(self, transaction_id):
+        ''' Endpoint for deleting a transaction '''
+        transaction = Transaction.query.filter_by(id=transaction_id).first()
+        if transaction:
+            db.session.delete(transaction)
+            db.session.commit()
+            return send_success("Deleted transaction: %s" % transaction_id)
+        else:
+            return send_error("Unknown transaction")
+
+
+api.add_resource(UserCreditsResource, '/credits/users/<netid>')
+api.add_resource(TransactionResource, '/credits/transactions',
+                 '/credits/transactions/<int:transaction_id>')
 db.init_app(app)
 db.create_all(app=app)
 
