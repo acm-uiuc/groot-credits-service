@@ -9,6 +9,9 @@ this license in a file with the distribution.
 
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
+from sqlalchemy import func
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
 import os
 from models import db, User, Transaction
 from utils import send_error, send_success
@@ -31,11 +34,23 @@ PORT = 8765
 DEBUG = os.environ.get('CREDITS_DEBUG', False)
 
 api = Api(app)
+scheduler = BackgroundScheduler()
 
 
 def validate_netid(netid):
     # TODO: Ask user service to validate netid
     return netid
+
+
+@scheduler.scheduled_job('interval', minutes=60)
+def verify_balance_integrity():
+    for user in User.query.all():
+        bal = db.session.query(func.sum(Transaction.amount)).filter_by(
+            netid=user.netid).scalar()
+        if user.balance != bal:
+            user.balance = bal
+            db.session.add(user)
+            db.session.commit()
 
 
 class UserCreditsResource(Resource):
@@ -67,7 +82,8 @@ class TransactionResource(Resource):
         parser.add_argument('description', location='json', default='')
         args = parser.parse_args()
 
-        if not User.query.filter_by(netid=args.netid).first():
+        user = User.query.filter_by(netid=args.netid).first()
+        if not user:
             return send_error('Unrecognized user')
 
         transaction = Transaction(
@@ -75,6 +91,9 @@ class TransactionResource(Resource):
             amount=args.amount,
             description=args.description
         )
+        user.balance += args.amount
+
+        db.session.add(user)
         db.session.add(transaction)
         db.session.commit()
         return jsonify(transaction.serialize())
@@ -83,6 +102,8 @@ class TransactionResource(Resource):
         ''' Endpoint for deleting a transaction '''
         transaction = Transaction.query.filter_by(id=transaction_id).first()
         if transaction:
+            transaction.user.balance -= transaction.amount
+            db.session.add(transaction.user)
             db.session.delete(transaction)
             db.session.commit()
             return send_success("Deleted transaction: %s" % transaction_id)
@@ -95,7 +116,10 @@ api.add_resource(TransactionResource, '/credits/transactions',
                  '/credits/transactions/<int:transaction_id>')
 db.init_app(app)
 db.create_all(app=app)
+app.app_context().push()
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")
+    verify_balance_integrity()
+    scheduler.start()
     app.run(port=PORT, debug=DEBUG)

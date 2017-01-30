@@ -13,20 +13,19 @@ db = SQLAlchemy()
 
 
 class User(db.Model):
-    __tablename__ = 'users'
     netid = db.Column(db.String(200), primary_key=True)
+    balance = db.Column(db.Float())
     transactions = db.relationship('Transaction', backref='user',
                                    lazy='dynamic')
 
     def serialize(self):
         return {
             "netid": self.netid,
-            "balance": sum(i.amount for i in self.transactions)
+            "balance": self.balance
         }
 
 
 class Transaction(db.Model):
-    __tablename__ = 'transactions'
     id = db.Column(db.Integer, primary_key=True)
     netid = db.Column(db.String(200), db.ForeignKey('user.netid'))
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
