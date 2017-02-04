@@ -11,7 +11,6 @@ from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 from sqlalchemy import func
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
 import os
 from models import db, User, Transaction
 from utils import send_error, send_success
@@ -32,6 +31,7 @@ app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=UTF-8'
 
 PORT = 8765
 DEBUG = os.environ.get('CREDITS_DEBUG', False)
+DEFAULT_CREDITS_BALANCE = 5.0
 
 api = Api(app)
 scheduler = BackgroundScheduler()
@@ -62,11 +62,19 @@ class UserCreditsResource(Resource):
         return jsonify(user.serialize())
 
     def post(self, netid):
-        ''' Endpoint for creating a user account '''
+        '''
+        Endpoint for creating a user account
+
+        Sets balance to DEFAULT_CREDITS_BALANCE and creates a corrosponding
+        transaction to initialize the user's balance.
+        '''
         if User.query.filter_by(netid=netid).first():
             return send_error('User already exists')
-        user = User(netid=netid)
+        user = User(netid=netid, balance=DEFAULT_CREDITS_BALANCE)
+        initial_transaction = Transaction(netid=netid,
+                                          amount=DEFAULT_CREDITS_BALANCE)
         db.session.add(user)
+        db.session.add(initial_transaction)
         db.session.commit()
         return jsonify(user.serialize())
 
