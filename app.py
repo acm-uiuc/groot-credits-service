@@ -19,7 +19,6 @@ import stripe
 import logging
 from settings import MYSQL, GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY
 stripe.api_key = STRIPE_SECRET_KEY
-stripe.api_base = "https://api-tls12.stripe.com"
 logger = logging.getLogger('groot_credits_service')
 logging.basicConfig(level="INFO")
 
@@ -74,15 +73,15 @@ def make_payment():
     parser.add_argument('netid', location='json',
                         required=True, type=validate_netid)
     parser.add_argument('amount', location='json',
-                        required=True, type=float)
+                        required=True, type=int)
     parser.add_argument('token', location='json',
                         required=True)
     parser.add_argument('description', location='json',
                         required=True)
     args = parser.parse_args()
-    print args
 
     customer = stripe.Customer.create(
+        description=args.netid,
         source=args.token
     )
 
@@ -93,6 +92,15 @@ def make_payment():
             currency='usd',
             description=args.description
         )
+        # TODO: Create User if necessary
+        # TODO: Update User balance
+        refill = Transaction(
+            netid=args.netid,
+            amount=(args.amount / 100.0),
+            description=args.description
+        )
+        db.session.add(refill)
+        db.session.commit()
         return jsonify({'successful': True})
     except Exception as e:
         print e
@@ -134,6 +142,8 @@ class TransactionResource(Resource):
 
         transactions = Transaction.query.filter_by(netid=args.netid)
         balance = User.query.filter_by(netid=args.netid).first().balance
+
+        # TODO: Sort Transactins in reverse chronological order
         payload = {
             'transactions': [t.serialize() for t in transactions],
             'balance': balance
