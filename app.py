@@ -15,7 +15,9 @@ import os
 from datetime import datetime
 from models import db, User, Transaction
 from utils import send_error, send_success
-from settings import MYSQL, GROOT_ACCESS_TOKEN
+import stripe
+from settings import MYSQL, GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY
+stripe.api_key = STRIPE_SECRET_KEY
 
 import logging
 logger = logging.getLogger('groot_credits_service')
@@ -53,6 +55,37 @@ def verify_balance_integrity():
                 user.balance = bal
                 db.session.add(user)
                 db.session.commit()
+
+
+@app.route('/payment', methods=['POST'])
+def make_payment():
+    parser = reqparse.RequestParser()
+    parser.add_argument('netid', location='json',
+                        required=True, type=validate_netid)
+    parser.add_argument('amount', location='json',
+                        required=True, type=float)
+    parser.add_argument('token', location='json',
+                        required=True)
+    parser.add_argument('description', location='json',
+                        required=True)
+    args = parser.parse_args()
+    print args
+
+    customer = stripe.Customer.create(
+        source=args.token
+    )
+
+    try:
+        stripe.Charge.create(
+            customer=customer.id,
+            amount=args.amount,
+            currency='usd',
+            description=args.description
+        )
+        return jsonify({'successful': True})
+    except Exception as e:
+        print e
+        return jsonify({'successful': False})
 
 
 class UserCreditsResource(Resource):
