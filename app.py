@@ -16,11 +16,22 @@ from datetime import datetime
 from models import db, User, Transaction
 from utils import send_error, send_success
 import stripe
+import logging
 from settings import MYSQL, GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY
 stripe.api_key = STRIPE_SECRET_KEY
-
-import logging
+stripe.api_base = "https://api-tls12.stripe.com"
 logger = logging.getLogger('groot_credits_service')
+logging.basicConfig(level="INFO")
+
+# Check to see that Stripe can make API calls
+# I got bitten by an openSSL version error, so make sure to double check
+try:
+    stripe.Charge.all()
+    logger.info("TLS 1.2 supported, no action required.")
+except stripe.error.APIConnectionError:
+    logger.error("TLS 1.2 is not supported. Strip WILL NOT function.")
+
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -176,5 +187,4 @@ db.create_all(app=app)
 scheduler.start()
 
 if __name__ == "__main__":
-    logging.basicConfig(level="INFO")
     app.run(port=PORT, debug=DEBUG)
