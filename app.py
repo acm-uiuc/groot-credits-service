@@ -80,6 +80,20 @@ class UserCreditsResource(Resource):
 
 
 class TransactionResource(Resource):
+    def get(self, id=None):
+        ''' Endpoint for getting a user's transaction history '''
+        parser = reqparse.RequestParser()
+        parser.add_argument('netid', required=True, type=validate_netid)
+        args = parser.parse_args()
+
+        transactions = Transaction.query.filter_by(netid=args.netid)
+        balance = User.query.filter_by(netid=args.netid).first().balance
+        payload = {
+            'transactions': [t.serialize() for t in transactions],
+            'balance': balance
+        }
+        return jsonify(payload)
+
     def post(self, id=None):
         ''' Endpoint for creating a new transaction '''
         parser = reqparse.RequestParser()
