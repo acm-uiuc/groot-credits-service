@@ -12,6 +12,7 @@ from flask_restful import Resource, Api, reqparse
 from sqlalchemy import func
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
+from datetime import datetime
 from models import db, User, Transaction
 from utils import send_error, send_success
 from settings import MYSQL, GROOT_ACCESS_TOKEN
@@ -42,15 +43,16 @@ def validate_netid(netid):
     return netid
 
 
-@scheduler.scheduled_job('interval', minutes=60)
+@scheduler.scheduled_job('interval', minutes=60, next_run_time=datetime.now())
 def verify_balance_integrity():
-    for user in User.query.all():
-        bal = db.session.query(func.sum(Transaction.amount)).filter_by(
-            netid=user.netid).scalar()
-        if user.balance != bal:
-            user.balance = bal
-            db.session.add(user)
-            db.session.commit()
+    with app.app_context():
+        for user in User.query.all():
+            bal = db.session.query(func.sum(Transaction.amount)).filter_by(
+                netid=user.netid).scalar()
+            if user.balance != bal:
+                user.balance = bal
+                db.session.add(user)
+                db.session.commit()
 
 
 class UserCreditsResource(Resource):
@@ -138,10 +140,8 @@ api.add_resource(TransactionResource, '/credits/transactions',
                  '/credits/transactions/<int:transaction_id>')
 db.init_app(app)
 db.create_all(app=app)
-app.app_context().push()
+scheduler.start()
 
 if __name__ == "__main__":
     logging.basicConfig(level="INFO")
-    verify_balance_integrity()
-    scheduler.start()
     app.run(port=PORT, debug=DEBUG)
