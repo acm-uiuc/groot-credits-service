@@ -143,9 +143,11 @@ def make_payment():
                         required=True)
     parser.add_argument('description', location='json',
                         required=True)
+    parser.add_argument('adjust_balance', location='json',
+                        default=True, type=bool)
     args = parser.parse_args()
 
-    if args.amount < 5 or args.amount > 50:
+    if (args.amount < 500) or (args.amount > 5000):
         return send_error('Invalid transaction amount.')
 
     try:
@@ -162,20 +164,21 @@ def make_payment():
         )
         float_amount = (args.amount / 100.0)  # Convert from cents to dollars
 
-        # Create transaction for payment
-        refill = Transaction(
-            netid=args.netid,
-            amount=float_amount,
-            description=args.description
-        )
+        if args.adjust_balance:
+            # Create transaction for payment
+            refill = Transaction(
+                netid=args.netid,
+                amount=float_amount,
+                description=args.description
+            )
 
-        # Update User balance
-        user = get_user(args.netid)
-        user.balance += float_amount
+            # Update User balance
+            user = get_user(args.netid)
+            user.balance += float_amount
 
-        db.session.add(refill)
-        db.session.add(user)
-        db.session.commit()
+            db.session.add(refill)
+            db.session.add(user)
+            db.session.commit()
         return jsonify({'successful': True})
     except Exception as e:
         print e
