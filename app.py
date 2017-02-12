@@ -88,7 +88,8 @@ def create_user_account(netid):
         return  # User already exists
     user = User(netid=netid, balance=DEFAULT_CREDITS_BALANCE)
     initial_transaction = Transaction(netid=netid,
-                                      amount=DEFAULT_CREDITS_BALANCE)
+                                      amount=DEFAULT_CREDITS_BALANCE,
+                                      description="Initial balance")
     db.session.add(user)
     db.session.add(initial_transaction)
     db.session.commit()
@@ -133,12 +134,15 @@ def make_payment():
                         required=True)
     args = parser.parse_args()
 
-    customer = stripe.Customer.create(
-        description=args.netid,
-        source=args.token
-    )
+    if args.amount < 5 or args.amount > 50:
+        return send_error('Invalid transaction amount.')
 
     try:
+        customer = stripe.Customer.create(
+            description=args.netid,
+            source=args.token
+        )
+
         stripe.Charge.create(
             customer=customer.id,
             amount=args.amount,
@@ -193,7 +197,7 @@ class TransactionResource(Resource):
                         .filter_by(netid=args.netid)
                         .order_by(Transaction.created_at.desc()))
 
-        balance = User.query.filter_by(netid=args.netid).first().balance
+        balance = get_user(args.netid).balance
 
         payload = {
             'transactions': [t.serialize() for t in transactions],
