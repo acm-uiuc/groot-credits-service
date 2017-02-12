@@ -17,7 +17,9 @@ from models import db, User, Transaction
 from utils import send_error, send_success
 import stripe
 import logging
-from settings import MYSQL, GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY
+import requests
+from settings import (MYSQL, GROOT_SERVICES_URL,
+                      GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY)
 stripe.api_key = STRIPE_SECRET_KEY
 logger = logging.getLogger('groot_credits_service')
 logging.basicConfig(level="INFO")
@@ -50,7 +52,16 @@ scheduler = BackgroundScheduler()
 
 
 def validate_netid(netid):
-    # TODO: Ask user service to validate netid
+    # Ask user service to validate netid
+    r = requests.get(
+        headers={
+            'Authorization': GROOT_ACCESS_TOKEN,
+            'Accept': 'application/json'
+        },
+        url=GROOT_SERVICES_URL + '/users/{}/is_member'.format(netid)
+    )
+    if r.status_code != 200 or not r.json()['is_member']:
+        raise ValueError('Not a valid user.')
     return netid
 
 

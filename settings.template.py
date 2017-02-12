@@ -14,5 +14,6 @@ MYSQL = {
     'dbname': ''
 }
 
+GROOT_SERVICES_URL = ''
 GROOT_ACCESS_TOKEN = ''
 STRIPE_SECRET_KEY = ''
