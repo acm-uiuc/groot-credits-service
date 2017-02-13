@@ -48,6 +48,24 @@ Performs a payment charge through the Stripe API.
     * Default: True
     * Note: Should be `True` for balance refills, and `False` for purchases, like buying membership
 
+#### GET /credits/users
+
+Gets the balance of all users.
+Returns user balances with the following schema:
+```
+    [
+        {
+            "netid": jdoe2
+            "balance": 123.45
+        },
+        {
+            "netid": sjobs2
+            "balance": 999.99
+        },
+        ...
+    ]
+```
+
 #### GET /credits/users/{netid}
 
 Gets the details of a user's credits account.

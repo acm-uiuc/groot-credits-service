@@ -186,14 +186,18 @@ def make_payment():
 
 
 class UserCreditsResource(Resource):
-    def get(self, netid):
+    def get(self, netid=None):
         ''' Endpoint for checking a user's balance '''
-        try:
-            validate_netid(netid)
-        except:
-            return send_error('Unrecognized user', 404)
-        user = get_user(netid)
-        return jsonify(user.serialize())
+        if netid:  # Find single user's balance
+            try:
+                validate_netid(netid)
+            except:
+                return send_error('Unrecognized user', 404)
+            user = get_user(netid)
+            return jsonify(user.serialize())
+        else:  # Find all users' balances
+            users = User.query.all()
+            return jsonify([u.serialize() for u in users])
 
 
 class TransactionResource(Resource):
@@ -265,7 +269,8 @@ class TransactionResource(Resource):
             return send_error("Unknown transaction")
 
 
-api.add_resource(UserCreditsResource, '/credits/users/<netid>')
+api.add_resource(UserCreditsResource, '/credits/users',
+                 '/credits/users/<netid>')
 api.add_resource(TransactionResource, '/credits/transactions',
                  '/credits/transactions/<int:transaction_id>')
 db.init_app(app)
