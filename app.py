@@ -208,7 +208,8 @@ class TransactionResource(Resource):
         Returns transactions in reverse chronologial order
         '''
         parser = reqparse.RequestParser()
-        parser.add_argument('netid', required=True, type=validate_netid)
+        parser.add_argument('netid', location='args',
+                            required=True, type=validate_netid)
         args = parser.parse_args()
 
         transactions = (Transaction.query
