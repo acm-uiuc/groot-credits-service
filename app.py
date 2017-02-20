@@ -60,7 +60,7 @@ def validate_netid(netid):
         },
         url=GROOT_SERVICES_URL + '/users/{}/is_member'.format(netid)
     )
-    if r.status_code != 200 or not r.json()['is_member']:
+    if r.status_code != 200 or not r.json()['data']['is_member']:
         raise ValueError('Not a valid user.')
     return netid
 
