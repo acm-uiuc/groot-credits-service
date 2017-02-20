@@ -14,12 +14,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import os
 from datetime import datetime
 from models import db, User, Transaction
-from utils import send_error, send_success
+from utils import (send_error, send_success, is_admin, validate_netid,
+                   netid_from_token)
 import stripe
 import logging
-import requests
-from settings import (MYSQL, GROOT_SERVICES_URL,
-                      GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY)
+from settings import MYSQL, GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY
 stripe.api_key = STRIPE_SECRET_KEY
 logger = logging.getLogger('groot_credits_service')
 logging.basicConfig(level="INFO")
@@ -49,20 +48,6 @@ DEFAULT_CREDITS_BALANCE = 5.0
 
 api = Api(app)
 scheduler = BackgroundScheduler()
-
-
-def validate_netid(netid):
-    # Ask user service to validate netid
-    r = requests.get(
-        headers={
-            'Authorization': GROOT_ACCESS_TOKEN,
-            'Accept': 'application/json'
-        },
-        url=GROOT_SERVICES_URL + '/users/{}/is_member'.format(netid)
-    )
-    if r.status_code != 200 or not r.json()['data']['is_member']:
-        raise ValueError('Not a valid user.')
-    return netid
 
 
 @scheduler.scheduled_job('interval', minutes=60, next_run_time=datetime.now())
@@ -237,7 +222,14 @@ class TransactionResource(Resource):
         parser.add_argument('amount', location='json',
                             required=True, type=float)
         parser.add_argument('description', location='json', default='')
+        parser.add_argument('Credits-Token', location='headers',
+                            required=True, type=netid_from_token,
+                            dest='admin_netid')
         args = parser.parse_args()
+
+        # Require an admin session token to create transactions
+        if not is_admin(args.admin_netid):
+            return send_error("Must be admin to delete transaction", 403)
 
         transaction = Transaction(
             netid=args.netid,
@@ -259,6 +251,16 @@ class TransactionResource(Resource):
         Deletes the given Transaction and updates the associated User record's
         balance
         '''
+        parser = reqparse.RequestParser()
+        parser.add_argument('Credits-Token', location='headers',
+                            required=True, type=netid_from_token,
+                            dest='admin_netid')
+        args = parser.parse_args()
+
+        # Require an admin session token to delete transactions
+        if not is_admin(args.admin_netid):
+            return send_error("Must be admin to delete transaction", 403)
+
         transaction = Transaction.query.filter_by(id=transaction_id).first()
         if transaction:
             transaction.user.balance -= transaction.amount
