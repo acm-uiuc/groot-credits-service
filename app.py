@@ -222,14 +222,8 @@ class TransactionResource(Resource):
         parser.add_argument('amount', location='json',
                             required=True, type=float)
         parser.add_argument('description', location='json', default='')
-        parser.add_argument('Credits-Token', location='headers',
-                            required=True, type=netid_from_token,
-                            dest='admin_netid')
-        args = parser.parse_args()
 
-        # Require an admin session token to create transactions
-        if not is_admin(args.admin_netid):
-            return send_error("Must be admin to delete transaction", 403)
+        args = parser.parse_args()
 
         transaction = Transaction(
             netid=args.netid,

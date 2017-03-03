@@ -105,11 +105,6 @@ Returns a user transaction history with the following schema:
 
 Endpoint for creating a new transaction. Creates a new Transaction record and updates the associated User record's balance.
 
-*Headers*
-* `Credits-Token` - The session token of the user making the request
-    * Required
-    * Used to authenticate route
-
 *Body Params:*
 * `netid` - NetID of the user.
     * Required
