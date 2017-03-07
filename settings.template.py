@@ -10,10 +10,10 @@ this license in a file with the distribution.
 MYSQL = {
     'user': '',
     'password': '',
-    'host': '',
+    'host': 'localhost',
     'dbname': 'groot_credits_service'
 }
 
-GROOT_SERVICES_URL = ''
+GROOT_SERVICES_URL = 'http://localhost:8000'
 GROOT_ACCESS_TOKEN = ''
 STRIPE_SECRET_KEY = ''
