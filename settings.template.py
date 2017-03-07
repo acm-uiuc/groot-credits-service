@@ -11,7 +11,7 @@ MYSQL = {
     'user': '',
     'password': '',
     'host': '',
-    'dbname': ''
+    'dbname': 'groot_credits_service'
 }
 
 GROOT_SERVICES_URL = ''
