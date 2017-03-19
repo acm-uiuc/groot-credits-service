@@ -11,6 +11,7 @@ itsdangerous==0.24
 Jinja2==2.9.5
 MarkupSafe==0.23
 packaging==16.8
+pep8==1.7.0
 PyMySQL==0.7.9
 pyparsing==2.1.10
 python-dateutil==2.6.0
