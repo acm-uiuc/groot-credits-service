@@ -19,6 +19,7 @@ from utils import (send_error, send_success, is_admin, validate_netid,
 import stripe
 import logging
 from settings import MYSQL, GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY
+from pytz import utc
 stripe.api_key = STRIPE_SECRET_KEY
 logger = logging.getLogger('groot_credits_service')
 logging.basicConfig(level="INFO")
@@ -48,6 +49,7 @@ DEFAULT_CREDITS_BALANCE = 5.0
 
 api = Api(app)
 scheduler = BackgroundScheduler()
+scheduler.configure(timezone=utc)
 
 
 @scheduler.scheduled_job('interval', minutes=60, next_run_time=datetime.now())
