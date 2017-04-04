@@ -196,19 +196,20 @@ class TransactionResource(Resource):
         '''
         parser = reqparse.RequestParser()
         parser.add_argument('netid', location='args',
-                            required=True, type=validate_netid)
+                            type=validate_netid)
         args = parser.parse_args()
 
         transactions = (Transaction.query
-                        .filter_by(netid=args.netid)
                         .order_by(Transaction.created_at.desc()))
-
-        balance = get_user(args.netid).balance
+        if args.netid:
+            transactions = transactions.filter_by(netid=args.netid)
 
         payload = {
             'transactions': [t.serialize() for t in transactions],
-            'balance': balance
         }
+        if args.netid:
+            payload['balance'] = get_user(args.netid).balance
+
         return jsonify(payload)
 
     def post(self, id=None):
