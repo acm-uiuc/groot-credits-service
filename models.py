@@ -35,6 +35,7 @@ class Transaction(db.Model):
     def serialize(self):
         return {
             "id": self.id,
+            "user": self.netid,
             "created_at": self.created_at.isoformat(),
             "description": self.description,
             "amount": self.amount
