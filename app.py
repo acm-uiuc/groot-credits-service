@@ -18,7 +18,7 @@ from utils import (send_error, send_success, is_admin, validate_netid,
                    netid_from_token)
 import stripe
 import logging
-from settings import MYSQL, GROOT_ACCESS_TOKEN, STRIPE_SECRET_KEY
+from settings import MYSQL, STRIPE_SECRET_KEY
 from pytz import utc
 stripe.api_key = STRIPE_SECRET_KEY
 logger = logging.getLogger('groot_credits_service')
@@ -149,19 +149,18 @@ def make_payment():
             currency='usd',
             description=args.description
         )
-        float_amount = (args.amount / 100.0)  # Convert from cents to dollars
 
         if args.adjust_balance:
             # Create transaction for payment
             refill = Transaction(
                 netid=args.netid,
-                amount=float_amount,
+                amount=args.amount,
                 description=args.description
             )
 
             # Update User balance
             user = get_user(args.netid)
-            user.balance += float_amount
+            user.balance += args.amount
 
             db.session.add(refill)
             db.session.add(user)
@@ -223,7 +222,7 @@ class TransactionResource(Resource):
         parser.add_argument('netid', location='json',
                             required=True, type=validate_netid)
         parser.add_argument('amount', location='json',
-                            required=True, type=float)
+                            required=True, type=int)
         parser.add_argument('description', location='json', default='')
 
         args = parser.parse_args()

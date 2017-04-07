@@ -30,7 +30,7 @@ class Transaction(db.Model):
     netid = db.Column(db.String(200), db.ForeignKey('user.netid'))
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
     description = db.Column(db.String(200))
-    amount = db.Column(db.Float())
+    amount = db.Column(db.Integer)
 
     def serialize(self):
         return {
