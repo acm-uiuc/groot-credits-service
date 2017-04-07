@@ -63,7 +63,7 @@ def verify_balance_integrity():
     with app.app_context():
         for user in User.query.all():
             bal = db.session.query(func.sum(Transaction.amount)).filter_by(
-                netid=user.netid).scalar()
+                netid=user.netid).scalar() or 0
             if user.balance != bal:
                 user.balance = bal
                 db.session.add(user)

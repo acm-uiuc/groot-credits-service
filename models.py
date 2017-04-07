@@ -21,7 +21,7 @@ class User(db.Model):
     def serialize(self):
         return {
             "netid": self.netid,
-            "balance": self.balance
+            "balance": self.balance or 0
         }
 
 
@@ -38,5 +38,5 @@ class Transaction(db.Model):
             "user": self.netid,
             "created_at": self.created_at.isoformat(),
             "description": self.description,
-            "amount": self.amount
+            "amount": self.amount or 0
         }
