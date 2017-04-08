@@ -21,7 +21,7 @@ class User(db.Model):
     def serialize(self):
         return {
             "netid": self.netid,
-            "balance": self.balance
+            "balance": self.balance or 0
         }
 
 
@@ -30,7 +30,7 @@ class Transaction(db.Model):
     netid = db.Column(db.String(200), db.ForeignKey('user.netid'))
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
     description = db.Column(db.String(200))
-    amount = db.Column(db.Float())
+    amount = db.Column(db.Integer)
 
     def serialize(self):
         return {
@@ -38,5 +38,5 @@ class Transaction(db.Model):
             "user": self.netid,
             "created_at": self.created_at.isoformat(),
             "description": self.description,
-            "amount": self.amount
+            "amount": self.amount or 0
         }
