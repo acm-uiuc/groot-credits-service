@@ -14,7 +14,6 @@ import logging
 logger = logging.getLogger('groot_credits_service.utils')
 
 
-
 def send_error(message, code=400):
     return make_response(jsonify(dict(error=message)), code)
 
