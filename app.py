@@ -45,7 +45,7 @@ app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=UTF-8'
 
 PORT = 8765
 DEBUG = os.environ.get('CREDITS_DEBUG', False)
-DEFAULT_CREDITS_BALANCE = 5.0
+DEFAULT_CREDITS_BALANCE = 500
 
 api = Api(app)
 scheduler = BackgroundScheduler()
