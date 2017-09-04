@@ -1,5 +1,8 @@
 language: python
 python:
-  - "2.7"
+- '2.7'
 script:
-  - "pip install flake8 && flake8 *.py"
+- pip install flake8 && flake8 *.py
+notifications:
+  slack:
+    secure: lBhJoYc33ml/fHhP01RsGh4qvXiI09czTo3QtdcC/n7SWGX+gEARfhSmd4pXv/4C+g28ghXD8YD6Q6XsG3oOcenq8MWlvc92GlG3PIwmAJew7EJ+y9q350O7J+7RMIBcC2AE6OREoXJ1nDX6gTQR4vt+wo+Z6mvSQUlghaXbf6LGJQG0ETxU+lngEXYbT8fhnYfy3n2ZmQ7E6llcbaJoKVOvXjwjgbbuakauyNSZ4b5B2D2F8ATHH0BugH5Rh44iwZ3HXksCntxe1ujBVrnqF7YUlROvmOc2tP4hpLK9lcKvT4FvIAUAC4iRmZPftb39KMyN2tcOaMh2Jarkev9JZrLNUY0OWmFqAR/KG2w5nM5aX70Qk+hxEjYDQ2LsOfUymV53Rj5bwcdGGDWrJrOyNMTMk6oF/7q5H62+JAD9t4+uVnFxXdWf4gD4XwBXPOf6xbZaeZNS01VdCFToMpRdTVabqzXGWJ/o3Xyqea0NYgUBwQT3PJrZT+EhaTPTnxYD+eEP7A0x7eWWJGXutARVNGQahnEVpSYO8iHcVV/j1DoB0iQyx87xGvpw6Qm33qLlQ17KWxG+6giq0sjnaLgqYLCGGAs6bYFTLCz8XGBlHGFy99/mmq0KHWl7a18gUzGp5ajq/8nnGlzY8X9CUkFBHBjJ7j/6yZDbGDq8mg7k/2E=
