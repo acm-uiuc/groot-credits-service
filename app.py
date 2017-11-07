@@ -177,7 +177,7 @@ class UserCreditsResource(Resource):
         if netid:  # Find single user's balance
             try:
                 validate_netid(netid)
-            except:
+            except ValueError:
                 return send_error('Unrecognized user', 404)
             user = get_user(netid)
             return jsonify(user.serialize())
